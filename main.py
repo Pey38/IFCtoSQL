@@ -72,7 +72,6 @@ def get_excel_download_link(df, filename="data.xlsx"):
     excel_file.seek(0)
     b64 = base64.b64encode(excel_file.read()).decode()  # some strings
     return f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">Download excel file</a>'
-
 def main():
     st.title('IFC to SQL Server and Excel Converter')
 
@@ -87,8 +86,11 @@ def main():
     # File Uploader
     uploaded_files = st.file_uploader("Choose IFC files", type='ifc', accept_multiple_files=True)
 
+    # Initialize an empty DataFrame to gather data from all files
+    all_data_df = pd.DataFrame()
+
     if uploaded_files:
-        for idx, uploaded_file in enumerate(uploaded_files):
+        for uploaded_file in uploaded_files:
             # Create a temporary file
             tfile = tempfile.NamedTemporaryFile(delete=False)
             tfile.write(uploaded_file.getvalue())
@@ -96,34 +98,32 @@ def main():
             # Convert IFC file to DataFrame
             df = ifc_to_dataframe(tfile.name, uploaded_file.name)
 
-            # Filter the DataFrame based on the search term and group option
-            search_key = f"search_term_{idx}"
-            search_term = st.sidebar.text_input("Enter a search term", key=search_key)
+            # Append data from this file to the main DataFrame
+            all_data_df = all_data_df.append(df, ignore_index=True)
 
-            group_option_key = f"group_option_{idx}"
-            group_option = st.sidebar.selectbox("Group by", options=["None"] + list(df.columns), key=group_option_key)
+    # Filter the DataFrame based on the search term and group option
+    search_term = st.sidebar.text_input("Enter a search term")
+    group_option = st.sidebar.selectbox("Group by", options=["None"] + list(all_data_df.columns))
 
-            if search_term:
-                df = df[df.apply(lambda row: search_term.lower() in row.to_string().lower(), axis=1)]
+    if search_term:
+        all_data_df = all_data_df[all_data_df.apply(lambda row: search_term.lower() in row.to_string().lower(), axis=1)]
 
-            if group_option != "None" and group_option in df.columns:
-                df = df.groupby(group_option).first().reset_index()
+    if group_option != "None" and group_option in all_data_df.columns:
+        all_data_df = all_data_df.groupby(group_option).first().reset_index()
 
-            # Display the DataFrame
-            st.dataframe(df)
+    # Display the DataFrame
+    st.dataframe(all_data_df)
 
-            # Export to Excel
-            export_excel_key = f"export_excel_{idx}"
-            if st.sidebar.button('Export to Excel', key=export_excel_key):
-                st.sidebar.markdown(get_excel_download_link(df), unsafe_allow_html=True)
+    # Export to Excel
+    if st.sidebar.button('Export to Excel'):
+        st.sidebar.markdown(get_excel_download_link(all_data_df), unsafe_allow_html=True)
 
-            # Export to SQL Server
-            export_sql_key = f"export_sql_{idx}"
-            if st.sidebar.button('Export to SQL Server', key=export_sql_key) and server and username and password and database and table_name:
-                connection_string = f'mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
-                engine = create_engine(connection_string)
-                df.to_sql(table_name, engine, if_exists='append')  # append to existing table if it exists
-                st.sidebar.write('Data written to SQL Server')
+    # Export to SQL Server
+    if st.sidebar.button('Export to SQL Server') and server and username and password and database and table_name:
+        connection_string = f'mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
+        engine = create_engine(connection_string)
+        all_data_df.to_sql(table_name, engine, if_exists='append')  # append to existing table if it exists
+        st.sidebar.write('Data written to SQL Server')
 
 if __name__ == "__main__":
     main()
