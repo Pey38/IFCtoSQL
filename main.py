@@ -129,6 +129,11 @@ def main():
 
         # Display the DataFrame
         st.dataframe(all_df)
+        
+          # Export to Excel button
+        if st.sidebar.button('Export to Excel'):
+            st.sidebar.markdown(get_excel_download_link(all_df), unsafe_allow_html=True)
+            
            # Export to SQL Server button
         if st.sidebar.button('Export to SQL Server') and server and username and password and database and table_name:
             connection_string = f'mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
@@ -136,9 +141,7 @@ def main():
             all_df.to_sql(table_name, engine, if_exists='replace')  # replace existing table if it exists
             st.sidebar.write('Data written to SQL Server')
 
-        # Export to Excel button
-        if st.sidebar.button('Export to Excel'):
-            st.sidebar.markdown(get_excel_download_link(all_df), unsafe_allow_html=True)
+      
 
         # SQL Server Parameters
         st.sidebar.header("SQL Server Parameters")
