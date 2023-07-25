@@ -77,7 +77,7 @@ def main():
     st.title('IFC to SQL Server and excel Converter')
 
     # Move the file uploader to the sidebar
-    uploaded_files = st.sidebar.file_uploader("Choose IFC files", type='ifc', accept_multiple_files=True, key="file_uploader")
+    uploaded_files = st.file_uploader("Choose IFC files", type='ifc', accept_multiple_files=True, key="file_uploader")
 
     # Create a dictionary to store each DataFrame
     dfs = {}
@@ -95,7 +95,7 @@ def main():
     st.sidebar.header("Options")
 
     # Add a checkbox for the user to select each model
-    model_options = {model: st.sidebar.checkbox("Select " + model, value=True) for model in dfs.keys()}
+    model_options = {model: st.checkbox("Select " + model, value=True) for model in dfs.keys()}
 
     # Add a text input for the search term in the sidebar
     search_term = st.sidebar.text_input("Enter a search term", key="search_term")
