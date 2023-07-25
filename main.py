@@ -101,32 +101,35 @@ def main():
             # Append data from this file to the main DataFrame
             all_data_dfs.append(df)
 
-    # Concatenate all DataFrames into a single DataFrame
-    all_data_df = pd.concat(all_data_dfs, ignore_index=True)
+    if all_data_dfs:
+        # Concatenate all DataFrames into a single DataFrame
+        all_data_df = pd.concat(all_data_dfs, ignore_index=True)
 
-    # Filter the DataFrame based on the search term and group option
-    search_term = st.sidebar.text_input("Enter a search term")
-    group_option = st.sidebar.selectbox("Group by", options=["None"] + list(all_data_df.columns))
+        # Filter the DataFrame based on the search term and group option
+        search_term = st.sidebar.text_input("Enter a search term")
+        group_option = st.sidebar.selectbox("Group by", options=["None"] + list(all_data_df.columns))
 
-    if search_term:
-        all_data_df = all_data_df[all_data_df.apply(lambda row: search_term.lower() in row.to_string().lower(), axis=1)]
+        if search_term:
+            all_data_df = all_data_df[all_data_df.apply(lambda row: search_term.lower() in row.to_string().lower(), axis=1)]
 
-    if group_option != "None" and group_option in all_data_df.columns:
-        all_data_df = all_data_df.groupby(group_option).first().reset_index()
+        if group_option != "None" and group_option in all_data_df.columns:
+            all_data_df = all_data_df.groupby(group_option).first().reset_index()
 
-    # Display the DataFrame
-    st.dataframe(all_data_df)
+        # Display the DataFrame
+        st.dataframe(all_data_df)
 
-    # Export to Excel
-    if st.sidebar.button('Export to Excel'):
-        st.sidebar.markdown(get_excel_download_link(all_data_df), unsafe_allow_html=True)
+        # Export to Excel
+        if st.sidebar.button('Export to Excel'):
+            st.sidebar.markdown(get_excel_download_link(all_data_df), unsafe_allow_html=True)
 
-    # Export to SQL Server
-    if st.sidebar.button('Export to SQL Server') and server and username and password and database and table_name:
-        connection_string = f'mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
-        engine = create_engine(connection_string)
-        all_data_df.to_sql(table_name, engine, if_exists='append')  # append to existing table if it exists
-        st.sidebar.write('Data written to SQL Server')
+        # Export to SQL Server
+        if st.sidebar.button('Export to SQL Server') and server and username and password and database and table_name:
+            connection_string = f'mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(connection_string)
+            all_data_df.to_sql(table_name, engine, if_exists='append')  # append to existing table if it exists
+            st.sidebar.write('Data written to SQL Server')
+    else:
+        st.write("No data found. Please upload IFC files.")
 
 if __name__ == "__main__":
     main()
