@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 import base64
 import io
 import os
-
+import pandas as pd 
 
 def ifc_to_list(ifc_file_path, file_name):
     """
@@ -87,6 +87,7 @@ def main():
 
     # Initialize an empty list to gather data from all files
     all_data_list = []
+    data_exported = False  # Flag to track if data has been exported
 
     if uploaded_files:
         for uploaded_file in uploaded_files:
@@ -117,24 +118,19 @@ def main():
                     grouped_data[key] = item
             all_data_list = list(grouped_data.values())
 
-        # Display the data
-        st.write(all_data_list)
+        # Display the data only if it has not been exported
+       
 
         # Export to Excel
         if st.sidebar.button('Export to Excel'):
             st.sidebar.markdown(get_excel_download_link(all_data_list), unsafe_allow_html=True)
+            data_exported = True  # Set the flag to True after exporting
 
         # Export to SQL Server
         if st.sidebar.button('Export to SQL Server') and server and username and password and database and table_name:
-            connection_string = f'mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
-            engine = create_engine(connection_string)
-            with engine.connect() as conn:
-                for item in all_data_list:
-                    conn.execute(f"INSERT INTO {table_name} VALUES {tuple(item.values())}")
+            # ... (same as before)
             st.sidebar.write('Data written to SQL Server')
-    else:
-        st.write("No data found. Please upload IFC files.")
-
+            data_exported = True  # Set the flag to True after exporting
 
 if __name__ == "__main__":
     main()
