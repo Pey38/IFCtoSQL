@@ -87,7 +87,7 @@ def main():
     uploaded_files = st.file_uploader("Choose IFC files", type='ifc', accept_multiple_files=True)
 
     # Initialize an empty DataFrame to gather data from all files
-    all_data_df = pd.DataFrame()
+    all_data_dfs = []
 
     if uploaded_files:
         for uploaded_file in uploaded_files:
@@ -99,7 +99,10 @@ def main():
             df = ifc_to_dataframe(tfile.name, uploaded_file.name)
 
             # Append data from this file to the main DataFrame
-            all_data_df = all_data_df.append(df, ignore_index=True)
+            all_data_dfs.append(df)
+
+    # Concatenate all DataFrames into a single DataFrame
+    all_data_df = pd.concat(all_data_dfs, ignore_index=True)
 
     # Filter the DataFrame based on the search term and group option
     search_term = st.sidebar.text_input("Enter a search term")
